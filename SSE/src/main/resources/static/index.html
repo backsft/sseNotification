@@ -12,17 +12,26 @@
     <div id="sse-data"></div>
 
     <script>
-        const eventSource = new EventSource("/sse/connect");
+        let eventSource;
 
-        eventSource.onmessage = function(event) {
-            const sseData = document.getElementById("sse-data");
-            sseData.innerHTML += `<p>${event.data}</p>`;
-        };
+        function establishSseConnection() {
+            eventSource = new EventSource("/sse/connect");
 
-        eventSource.onerror = function(error) {
-            console.error("Error with SSE connection:", error);
-            eventSource.close();
-        };
+            eventSource.onmessage = function(event) {
+                const sseData = document.getElementById("sse-data");
+                sseData.innerHTML += `<p>${event.data}</p>`;
+            };
+
+            eventSource.onerror = function(error) {
+                console.error("Error with SSE connection:", error);
+                eventSource.close();
+                // Attempt to reconnect (customize as needed)
+                setTimeout(establishSseConnection, 5000); // Retry after 5 seconds
+            };
+        }
+
+        // Establish SSE connection on page load
+        establishSseConnection();
     </script>
 
 </body>
