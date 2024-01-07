@@ -29,8 +29,15 @@ public class SseController {
     public void notifyClients() {
         for (SseEmitter emitter : emitters) {
             try {
-                // Send a notification to all connected clients
-                emitter.send("You got a notification ");
+                // Create a MyData object
+                MyData myData = new MyData();
+                myData.setId("123");
+                myData.setName("John Doe");
+                myData.setUsername("johndoe");
+                myData.setDetails("Some details");
+
+                // Send the MyData object to all connected clients
+                emitter.send(myData);
             } catch (IOException e) {
                 // Handle exceptions (e.g., client disconnected)
                 emitters.remove(emitter);
