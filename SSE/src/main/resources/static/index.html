@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE Example</title>
+</head>
+<body>
+
+    <h1>SSE Example</h1>
+
+    <div id="sse-data"></div>
+
+    <script>
+        const eventSource = new EventSource("/sse/connect");
+
+        eventSource.onmessage = function(event) {
+            const sseData = document.getElementById("sse-data");
+            sseData.innerHTML += `<p>${event.data}</p>`;
+        };
+
+        eventSource.onerror = function(error) {
+            console.error("Error with SSE connection:", error);
+            eventSource.close();
+        };
+    </script>
+
+</body>
+</html>
