@@ -9,29 +9,40 @@
 
     <h1>SSE Example</h1>
 
-    <div id="sse-data"></div>
+    <!-- Change the user ID as needed -->
+    <div id="sse-data" data-user-id="johndoe"></div>
 
     <script>
         let eventSource;
 
-        function establishSseConnection() {
-            eventSource = new EventSource("/sse/connect");
+        function establishSseConnection(userId) {
+            eventSource = new EventSource(`/sse/connect/${userId}`);
 
             eventSource.onmessage = function(event) {
                 const sseData = document.getElementById("sse-data");
                 sseData.innerHTML += `<p>${event.data}</p>`;
             };
-
-            eventSource.onerror = function(error) {
+            
+            eventSource.onerror = function (error) {
                 console.error("Error with SSE connection:", error);
-                eventSource.close();
-                // Attempt to reconnect (customize as needed)
-                setTimeout(establishSseConnection, 5000); // Retry after 5 seconds
+                if (error.eventPhase === EventSource.CLOSED) {
+                    console.log("SSE connection closed by the server");
+                } else {
+                    console.log("Other SSE connection error");
+                    // Attempt to reconnect (customize as needed)
+                    setTimeout(() => establishSseConnection(userId), 5000); // Retry after 5 seconds
+                }
             };
+           
+            
+        
         }
 
+        // Change the user ID as needed
+        const userId = document.getElementById("sse-data").getAttribute("data-user-id");
+
         // Establish SSE connection on page load
-        establishSseConnection();
+        establishSseConnection(userId);
     </script>
 
 </body>

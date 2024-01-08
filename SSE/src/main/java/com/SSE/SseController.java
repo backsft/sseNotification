@@ -1,8 +1,10 @@
 package com.SSE;
 import java.io.IOException;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -11,23 +13,24 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequestMapping("/sse")
 public class SseController {
 
-    private final CopyOnWriteArrayList<SseEmitter> emitters = new CopyOnWriteArrayList<>();
+    private final Map<String, SseEmitter> userEmitters = new ConcurrentHashMap<>();
 
-    @GetMapping("/connect")
-    public SseEmitter connect() {
+    @GetMapping("/connect/{userId}")
+    public SseEmitter connect(@PathVariable String userId) {
         SseEmitter emitter = new SseEmitter();
-        emitters.add(emitter);
+        userEmitters.put(userId, emitter);
 
         // Remove the emitter when the client disconnects
-        emitter.onCompletion(() -> emitters.remove(emitter));
-        emitter.onTimeout(() -> emitters.remove(emitter));
+        emitter.onCompletion(() -> userEmitters.remove(userId, emitter));
+        emitter.onTimeout(() -> userEmitters.remove(userId, emitter));
 
         return emitter;
     }
 
-    @GetMapping("/notify")
-    public void notifyClients() {
-        for (SseEmitter emitter : emitters) {
+    @GetMapping("/notify/{userId}")
+    public void notifyClient(@PathVariable String userId) {
+        SseEmitter emitter = userEmitters.get(userId);
+        if (emitter != null) {
             try {
                 // Create a MyData object
                 MyData myData = new MyData();
@@ -36,11 +39,11 @@ public class SseController {
                 myData.setUsername("johndoe");
                 myData.setDetails("Some details");
 
-                // Send the MyData object to all connected clients
+                // Send the MyData object to the specific user
                 emitter.send(myData);
             } catch (IOException e) {
                 // Handle exceptions (e.g., client disconnected)
-                emitters.remove(emitter);
+                userEmitters.remove(userId, emitter);
             }
         }
     }
